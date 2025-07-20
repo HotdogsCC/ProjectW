@@ -60,6 +60,7 @@ void UMultiplayerSessionsSubsystem::CreateServer(FString ServerName)
 	if(ServerName.IsEmpty())
 	{
 		PrintString("Server name cannot be empty");
+		ServerCreateDel.Broadcast(false);
 		return;
 	}
 
@@ -107,6 +108,7 @@ void UMultiplayerSessionsSubsystem::JoinServer(FString ServerName)
 	if(ServerName.IsEmpty())
 	{
 		PrintString("Server Name cannot be empty");
+		ServerCreateDel.Broadcast(false);
 		return;
 	}
 
@@ -129,6 +131,8 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 {
 	PrintString(FString::Printf(TEXT("On create session complete: %d"), bWasSuccessful));
 
+	ServerCreateDel.Broadcast(bWasSuccessful);
+	
 	if(bWasSuccessful)
 	{
 		GetWorld()->ServerTravel("/Game/CharliePrototyping/CharliePrototypeMap?listen");
@@ -148,8 +152,10 @@ void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, 
 
 void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 {
+	ServerCreateDel.Broadcast(bWasSuccessful);
 	if(!bWasSuccessful)
 	{
+		
 		return;
 	}
 
@@ -189,11 +195,13 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 		{
 			PrintString("Couldn't find server");
 			ServerNameToFind = "";
+			ServerCreateDel.Broadcast(false);
 		}
 	}
 	else
 	{
 		PrintString("no servers found");
+		ServerCreateDel.Broadcast(false);
 	}
 	
 }
