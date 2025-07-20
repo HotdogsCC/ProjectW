@@ -3,8 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "OnlineSessionSettings.h"
 #include "MultiplayerSessionsSubsystem.generated.h"
+
 
 /**
  * 
@@ -19,4 +22,30 @@ public:
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
+
+	UFUNCTION(BlueprintCallable)
+	void CreateServer(FString ServerName);
+	
+	UFUNCTION(BlueprintCallable)
+	void JoinServer(FString ServerName);
+
+	UFUNCTION()
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+	UFUNCTION()
+	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+
+	UFUNCTION()
+	void OnFindSessionsComplete(bool bWasSuccessful);
+	
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+
+	IOnlineSessionPtr SessionInterface;
+	bool bCreateServerAfterDestroy;
+	FString DestroyServerName;
+	FString ServerNameToFind;
+	FName MySessionName;
+
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+	
 };
