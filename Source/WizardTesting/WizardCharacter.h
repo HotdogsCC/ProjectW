@@ -8,6 +8,8 @@
 #include "WizardCharacter.generated.h"
 
 
+class AProjectileBase;
+
 UCLASS()
 class WIZARDTESTING_API AWizardCharacter : public ACharacter
 {
@@ -57,8 +59,12 @@ private:
 	UFUNCTION(Server, Reliable)
 	void PrimaryFireServerRPC();
 
-	//Project Blueprints
+	//Projectile Blueprints
 	UPROPERTY(EditDefaultsOnly, Category = "Projectiles", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<AActor> ProjectileBP;
+	TSubclassOf<AProjectileBase> ProjectileBP;
+
+	//temp object used for raycast debugging
+	UPROPERTY(EditDefaultsOnly, Category = "Debug", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AActor> SpotterThing;
 
 };
