@@ -59,7 +59,14 @@ private:
 	UFUNCTION()
 	float GetCurveAdditive(float input);
 
+	//where the orb just was
 	UPROPERTY()
 	FVector PreviousLocation;
+
+	UPROPERTY()
+	FVector CurveDirection;
+
+	UPROPERTY()
+	bool targetReached;
 
 };

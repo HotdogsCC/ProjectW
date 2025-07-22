@@ -105,7 +105,7 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 			HitResult,
 			CameraLocation,
 			End,
-			ECC_Visibility,
+			ECC_WorldStatic,
 			QueryParams
 			);
 

@@ -24,6 +24,8 @@ AProjectileBase::AProjectileBase()
 	//adds a light as a sub object
 	LightComponent = CreateDefaultSubobject<UPointLightComponent>("Light");
 	LightComponent->SetupAttachment(RootComponent);
+	
+	targetReached = false;
 
 }
 
@@ -32,63 +34,65 @@ void AProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	targetReached = false;
 }
 
 // Called every frame
 void AProjectileBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	//has the projectile run out of time?
-	if(DespawnTime <= 0.0f)
+
+	if(HasAuthority())
 	{
-		Destroy();
-		return;
-	}
+		//has the projectile run out of time?
+		if(DespawnTime <= 0.0f)
+		{
+			Destroy();
+			return;
+		}
 	
-	//decrement alive time
-	DespawnTime -= DeltaTime;
+		//decrement alive time
+		DespawnTime -= DeltaTime;
 
-	//move in its target direction
-	FVector CurrentToTarget = TargetLocation - PreviousLocation;
-	float CurDistanceToTarget = CurrentToTarget.Length();
+		//move in its target direction
+		FVector CurrentToTarget = TargetLocation - PreviousLocation;
+		float CurDistanceToTarget = CurrentToTarget.Length();
 
-	//its current percentage of travel, from 0-1
-	float TravelCompletion = (InitDistance - CurDistanceToTarget) / InitDistance;
+		//its current percentage of travel, from 0-1
+		float TravelCompletion = (InitDistance - CurDistanceToTarget) / InitDistance;
 	
 	
-	FVector DirectionNormalised = CurrentToTarget.GetSafeNormal();
-	FVector TravelVector = DirectionNormalised * MoveSpeed * DeltaTime;
+		FVector DirectionNormalised = CurrentToTarget.GetSafeNormal();
+		FVector TravelVector = DirectionNormalised * MoveSpeed * DeltaTime;
 
-	//are we going to overshoot?
-	if(TravelVector.SquaredLength() > CurDistanceToTarget * CurDistanceToTarget)
-	{
-		//set location to the target
-		SetActorLocation(TargetLocation);
+		//are we going to overshoot?
+		if(TravelVector.SquaredLength() > CurDistanceToTarget * CurDistanceToTarget)
+		{
+			//set location to the target
+			SetActorLocation(TargetLocation);
 
-		//mark this projectile for destruction
-		DespawnTime = 0.0f;
-	}
-	else
-	{
+			//mark this projectile for destruction
+			//DespawnTime = 0.0f;
 
-		//travel toward the target
-		SetActorLocation(PreviousLocation + TravelVector);
-		PreviousLocation = GetActorLocation();
+			targetReached = true;
+		}
+		else
+		{
 
-		//Get 'right' direction vector
-		FVector CameraLocation;
-		FRotator CameraRotation;
-		GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(CameraLocation,CameraRotation);
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *CameraRotation.ToString())
-		CameraRotation.Add(0, 90, 0);
+			//travel toward the target
+			SetActorLocation(PreviousLocation + TravelVector);
+			PreviousLocation = GetActorLocation();
 		
-		//adds curve
-		FVector RightCameraVector = CameraRotation.Vector();
-		RightCameraVector.Normalize();
-		RightCameraVector *= GetCurveAdditive(TravelCompletion);
-		SetActorLocation(GetActorLocation()+RightCameraVector);
+			//adds curve
+			FVector TempCurveVector = CurveDirection;
+			TempCurveVector *= GetCurveAdditive(TravelCompletion);
+			SetActorLocation(GetActorLocation()+TempCurveVector);
+		}
 	}
+	
+	
+	
+	
 
 	
 #if 0
@@ -108,6 +112,14 @@ void AProjectileBase::SetTarget(FVector InTargetLocation)
 	//set the initial distance from target
 	FVector CurrentToTarget = TargetLocation - GetActorLocation();
 	InitDistance = CurrentToTarget.Length();
+
+	//set initial curve direction
+	FRotator DirectionRotator = CurrentToTarget.Rotation();
+	DirectionRotator.Add(0, FMath::FRandRange(0.0f, 360.0f), 0);
+	CurveDirection = DirectionRotator.Vector();
+	CurveDirection.Normalize();
+	
+	targetReached = false;
 	
 }
 
