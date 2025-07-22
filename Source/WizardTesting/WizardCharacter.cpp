@@ -89,14 +89,6 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 	//if this machine is the server
 	if(HasAuthority())
 	{
-#if 0
-		AActor* ProjectileInstance = GetWorld()->SpawnActor(ProjectileBP);
-		//spawns projectile where player is
-		ProjectileInstance->SetActorLocation(GetActorLocation());
-		//rotates projectile in the direction the player is looking
-		ProjectileInstance->SetActorRotation(GetControlRotation());
-#endif
-
 		//get camera transform
 		FVector CameraLocation;
 		FRotator CameraRotation;
@@ -120,11 +112,20 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 		//if we hit something
 		if(bHit)
 		{
-			AActor* MyThing = GetWorld()->SpawnActor(SpotterThing);
-			MyThing->SetActorLocation(HitResult.Location);
+
+			AActor* ProjectileInstance = GetWorld()->SpawnActor(ProjectileBP);
+			//spawns projectile where player is
+			ProjectileInstance->SetActorLocation(GetActorLocation());
+			//rotates projectile in the direction the player is looking
+			ProjectileInstance->SetActorRotation(GetControlRotation());
+			//get projectile base cpp
+			if(AProjectileBase* ProjectileComponent = Cast<AProjectileBase>(ProjectileInstance))
+			{
+				ProjectileComponent->SetTarget(HitResult.Location);
+			}
 		}
 		
-		
+
 		
 	}
 }

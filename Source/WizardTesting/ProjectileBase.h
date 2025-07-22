@@ -48,8 +48,18 @@ private:
 	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
 	float Curviness = 0.0f;
 
+	//the initial distance from its spawn to the target
+	UPROPERTY()
+	float InitDistance;
+	
 	//where the projectile should head toward
 	UPROPERTY()
 	FVector TargetLocation;
+
+	UFUNCTION()
+	float GetCurveAdditive(float input);
+
+	UPROPERTY()
+	FVector PreviousLocation;
 
 };

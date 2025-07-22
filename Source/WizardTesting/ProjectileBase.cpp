@@ -31,6 +31,7 @@ AProjectileBase::AProjectileBase()
 void AProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
+	
 }
 
 // Called every frame
@@ -49,10 +50,71 @@ void AProjectileBase::Tick(float DeltaTime)
 	DespawnTime -= DeltaTime;
 
 	//move in its target direction
-	//FVector
+	FVector CurrentToTarget = TargetLocation - PreviousLocation;
+	float CurDistanceToTarget = CurrentToTarget.Length();
+
+	//its current percentage of travel, from 0-1
+	float TravelCompletion = (InitDistance - CurDistanceToTarget) / InitDistance;
 	
+	
+	FVector DirectionNormalised = CurrentToTarget.GetSafeNormal();
+	FVector TravelVector = DirectionNormalised * MoveSpeed * DeltaTime;
+
+	//are we going to overshoot?
+	if(TravelVector.SquaredLength() > CurDistanceToTarget * CurDistanceToTarget)
+	{
+		//set location to the target
+		SetActorLocation(TargetLocation);
+
+		//mark this projectile for destruction
+		DespawnTime = 0.0f;
+	}
+	else
+	{
+
+		//travel toward the target
+		SetActorLocation(PreviousLocation + TravelVector);
+		PreviousLocation = GetActorLocation();
+
+		//Get 'right' direction vector
+		FVector CameraLocation;
+		FRotator CameraRotation;
+		GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(CameraLocation,CameraRotation);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *CameraRotation.ToString())
+		CameraRotation.Add(0, 90, 0);
+		
+		//adds curve
+		FVector RightCameraVector = CameraRotation.Vector();
+		RightCameraVector.Normalize();
+		RightCameraVector *= GetCurveAdditive(TravelCompletion);
+		SetActorLocation(GetActorLocation()+RightCameraVector);
+	}
+
+	
+#if 0
 	FVector Forward(DeltaTime, 0.0f, 0.0f);
 	AddActorLocalOffset(Forward * MoveSpeed);
+#endif
 
 }
+
+void AProjectileBase::SetTarget(FVector InTargetLocation)
+{
+	//set the target
+	TargetLocation = InTargetLocation;
+
+	PreviousLocation = GetActorLocation();
+	
+	//set the initial distance from target
+	FVector CurrentToTarget = TargetLocation - GetActorLocation();
+	InitDistance = CurrentToTarget.Length();
+	
+}
+
+float AProjectileBase::GetCurveAdditive(float input)
+{
+	//parabola
+	return ((((input * 2) - 1) * ((input * 2) - 1) * -1) + 1) / (1 / Curviness);
+}
+
 
