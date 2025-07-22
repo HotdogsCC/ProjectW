@@ -93,12 +93,9 @@ void AProjectileBase::Tick(float DeltaTime)
 		else
 		{
 			//FIX THIS
-			TempCurveVector *= GetCurveAdditive(TravelCompletion+1);
+			TempCurveVector *= GetCurveAdditive(2-TravelCompletion);
 		}
-		
-		
-		
-		
+
 		SetActorLocation(GetActorLocation()+TempCurveVector);
 	}
 	
