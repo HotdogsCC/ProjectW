@@ -71,6 +71,6 @@ private:
 	FVector CurveDirection;
 
 	UPROPERTY()
-	bool targetReached;
+	bool bTargetReached;
 
 };

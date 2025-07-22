@@ -25,7 +25,7 @@ AProjectileBase::AProjectileBase()
 	LightComponent = CreateDefaultSubobject<UPointLightComponent>("Light");
 	LightComponent->SetupAttachment(RootComponent);
 	
-	targetReached = false;
+	bTargetReached = false;
 
 }
 
@@ -34,7 +34,7 @@ void AProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	targetReached = false;
+	bTargetReached = false;
 }
 
 // Called every frame
@@ -69,11 +69,36 @@ void AProjectileBase::Tick(float DeltaTime)
 		
 		//adds curve
 		FVector TempCurveVector = CurveDirection;
-		TempCurveVector *= GetCurveAdditive(TravelCompletion);
-		if(TravelCompletion > 1.0f)
+		
+		
+		if(!bTargetReached)
 		{
-			TempCurveVector *= -1;
+			//are we going to overshoot?
+			if(TravelVector.SquaredLength() > CurDistanceToTarget * CurDistanceToTarget)
+			{
+				//set location to the target
+				SetActorLocation(TargetLocation);
+
+				//mark this projectile for destruction
+				//DespawnTime = 0.0f;
+
+				bTargetReached = true;
+				
+			}
+			else
+			{
+				TempCurveVector *= GetCurveAdditive(TravelCompletion);
+			}
 		}
+		else
+		{
+			//FIX THIS
+			TempCurveVector *= GetCurveAdditive(TravelCompletion+1);
+		}
+		
+		
+		
+		
 		SetActorLocation(GetActorLocation()+TempCurveVector);
 	}
 	
@@ -109,7 +134,7 @@ void AProjectileBase::SetTarget(FVector InTargetLocation)
 	CurveDirection = DirectionRotator.Vector();
 	CurveDirection.Normalize();
 	
-	targetReached = false;
+	bTargetReached = false;
 	
 }
 
