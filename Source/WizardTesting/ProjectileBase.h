@@ -56,6 +56,10 @@ private:
 	UPROPERTY()
 	FVector TargetLocation;
 
+	//the direction in which the projectile should travel
+	UPROPERTY()
+	FVector TargetDirection;
+
 	UFUNCTION()
 	float GetCurveAdditive(float input);
 

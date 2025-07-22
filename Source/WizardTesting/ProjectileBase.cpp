@@ -58,36 +58,23 @@ void AProjectileBase::Tick(float DeltaTime)
 		FVector CurrentToTarget = TargetLocation - PreviousLocation;
 		float CurDistanceToTarget = CurrentToTarget.Length();
 
-		//its current percentage of travel, from 0-1
+		//its current percentage of travel, from 0-1 (or 1-inf past target)
 		float TravelCompletion = (InitDistance - CurDistanceToTarget) / InitDistance;
-	
-	
-		FVector DirectionNormalised = CurrentToTarget.GetSafeNormal();
-		FVector TravelVector = DirectionNormalised * MoveSpeed * DeltaTime;
-
-		//are we going to overshoot?
-		if(TravelVector.SquaredLength() > CurDistanceToTarget * CurDistanceToTarget)
-		{
-			//set location to the target
-			SetActorLocation(TargetLocation);
-
-			//mark this projectile for destruction
-			//DespawnTime = 0.0f;
-
-			targetReached = true;
-		}
-		else
-		{
-
-			//travel toward the target
-			SetActorLocation(PreviousLocation + TravelVector);
-			PreviousLocation = GetActorLocation();
 		
-			//adds curve
-			FVector TempCurveVector = CurveDirection;
-			TempCurveVector *= GetCurveAdditive(TravelCompletion);
-			SetActorLocation(GetActorLocation()+TempCurveVector);
+		FVector TravelVector = TargetDirection * MoveSpeed * DeltaTime;
+
+		//travel toward the target
+		SetActorLocation(PreviousLocation + TravelVector);
+		PreviousLocation = GetActorLocation();
+		
+		//adds curve
+		FVector TempCurveVector = CurveDirection;
+		TempCurveVector *= GetCurveAdditive(TravelCompletion);
+		if(TravelCompletion > 1.0f)
+		{
+			TempCurveVector *= -1;
 		}
+		SetActorLocation(GetActorLocation()+TempCurveVector);
 	}
 	
 	
@@ -112,6 +99,9 @@ void AProjectileBase::SetTarget(FVector InTargetLocation)
 	//set the initial distance from target
 	FVector CurrentToTarget = TargetLocation - GetActorLocation();
 	InitDistance = CurrentToTarget.Length();
+
+	//set target direction
+	TargetDirection = CurrentToTarget.GetSafeNormal();
 
 	//set initial curve direction
 	FRotator DirectionRotator = CurrentToTarget.Rotation();
