@@ -2,7 +2,7 @@
 
 
 #include "WizardCharacter.h"
-
+#include "ProjectileBase.h"
 
 // Sets default values
 AWizardCharacter::AWizardCharacter()
@@ -86,12 +86,49 @@ void AWizardCharacter::OnPrimaryFire()
 
 void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 {
+	//if this machine is the server
 	if(HasAuthority())
 	{
-		AActor* ProjectileInstance = GetWorld()->SpawnActor(ProjectileBP);
-		ProjectileInstance->SetActorTransform(GetActorTransform());
+		//get camera transform
+		FVector CameraLocation;
+		FRotator CameraRotation;
+		Controller->GetPlayerViewPoint(CameraLocation, CameraRotation);
+		FVector End = CameraLocation + (CameraRotation.Vector() * 20000.0f);
+
+		//set up for trace
+		FHitResult HitResult;
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(this);
+
+		//do the trace
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			CameraLocation,
+			End,
+			ECC_WorldStatic,
+			QueryParams
+			);
+
+		//if we hit something
+		if(bHit)
+		{
+
+			AActor* ProjectileInstance = GetWorld()->SpawnActor(ProjectileBP);
+			//spawns projectile where player is
+			ProjectileInstance->SetActorLocation(GetActorLocation());
+			//rotates projectile in the direction the player is looking
+			ProjectileInstance->SetActorRotation(GetControlRotation());
+			//get projectile base cpp
+			if(AProjectileBase* ProjectileComponent = Cast<AProjectileBase>(ProjectileInstance))
+			{
+				ProjectileComponent->SetWizardOwner(this);
+				ProjectileComponent->SetTarget(HitResult.Location);
+				
+			}
+		}
 		
-		UE_LOG(LogTemp, Warning, TEXT("pew pew"));
+
+		
 	}
 }
 
