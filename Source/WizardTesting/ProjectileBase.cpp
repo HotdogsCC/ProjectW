@@ -2,7 +2,7 @@
 
 
 #include "ProjectileBase.h"
-
+#include "WizardCharacter.h"
 #include "Components/LightComponent.h"
 #include "Components/PointLightComponent.h"
 
@@ -26,6 +26,7 @@ AProjectileBase::AProjectileBase()
 	LightComponent->SetupAttachment(RootComponent);
 	
 	bTargetReached = false;
+	bReady = false;
 
 }
 
@@ -35,6 +36,7 @@ void AProjectileBase::BeginPlay()
 	Super::BeginPlay();
 	
 	bTargetReached = false;
+	bReady = false;
 }
 
 // Called every frame
@@ -44,6 +46,8 @@ void AProjectileBase::Tick(float DeltaTime)
 
 	if(HasAuthority())
 	{
+		bReady = true;
+		
 		//has the projectile run out of time?
 		if(DespawnTime <= 0.0f)
 		{
@@ -92,7 +96,7 @@ void AProjectileBase::Tick(float DeltaTime)
 		}
 		else
 		{
-			//FIX THIS
+			//weird math bullshit but it works, trust
 			TempCurveVector *= GetCurveAdditive(2-TravelCompletion);
 		}
 
@@ -139,6 +143,21 @@ float AProjectileBase::GetCurveAdditive(float input)
 {
 	//parabola
 	return ((((input * 2) - 1) * ((input * 2) - 1) * -1) + 1) / (1 / Curviness);
+}
+
+void AProjectileBase::SetWizardOwner(AWizardCharacter* Wizard)
+{
+	WizardOwner = Wizard;
+}
+
+AWizardCharacter* AProjectileBase::GetWizardOwner() const
+{
+	return WizardOwner;
+}
+
+bool AProjectileBase::GetReady() const
+{
+	return bReady;
 }
 
 

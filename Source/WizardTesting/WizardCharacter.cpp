@@ -121,7 +121,9 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 			//get projectile base cpp
 			if(AProjectileBase* ProjectileComponent = Cast<AProjectileBase>(ProjectileInstance))
 			{
+				ProjectileComponent->SetWizardOwner(this);
 				ProjectileComponent->SetTarget(HitResult.Location);
+				
 			}
 		}
 		

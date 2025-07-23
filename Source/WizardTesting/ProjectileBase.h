@@ -7,6 +7,7 @@
 #include "ProjectileBase.generated.h"
 
 
+class AWizardCharacter;
 class UPointLightComponent;
 
 UCLASS()
@@ -28,6 +29,14 @@ public:
 
 	// used for where the spell should travel to 
 	void SetTarget(FVector TargetLocation);
+
+	UFUNCTION(BlueprintCallable)
+	AWizardCharacter* GetWizardOwner() const;
+		
+	void SetWizardOwner(AWizardCharacter* Wizard);
+
+	UFUNCTION(BlueprintCallable)
+	bool GetReady() const;
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -73,4 +82,11 @@ private:
 	UPROPERTY()
 	bool bTargetReached;
 
+	//the character actor who spawned the projectile
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	AWizardCharacter* WizardOwner;
+
+	//whether the projectile should care about collisions
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	bool bReady;
 };
