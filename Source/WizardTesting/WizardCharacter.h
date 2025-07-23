@@ -106,4 +106,8 @@ private:
 	UPROPERTY()
 	int32 LastKnownHealth;
 
+	//temp for instant respawn
+	UPROPERTY()
+	FVector SpawnLocation;
+
 };

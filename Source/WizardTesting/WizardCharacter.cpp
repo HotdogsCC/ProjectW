@@ -31,6 +31,8 @@ void AWizardCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SpawnLocation = GetActorLocation();
+
 	//set max walk speed to walk speed definied in wizard BP
 	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
 	{
@@ -211,6 +213,8 @@ void AWizardCharacter::TakeDamage(int32 DamageTaken)
 	{
 		//die
 		UE_LOG(LogTemp, Warning, TEXT("buddy is out of health and should die"));
+		SetActorLocation(SpawnLocation);
+		CurrentHealth = MaxHealth;
 	}
 	
 }
