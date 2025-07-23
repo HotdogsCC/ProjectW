@@ -2,13 +2,27 @@
 
 
 #include "WizardCharacter.h"
+#include "Net/UnrealNetwork.h"
+#include "HUDUserWidget.h"
 #include "ProjectileBase.h"
+#include "Blueprint/UserWidget.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AWizardCharacter::AWizardCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	
+	//set max walk speed to walk speed definied in wizard BP
+	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
+	{
+		MyCharacterMovement->MaxWalkSpeed = WalkSpeed;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("failed to set character movement in constructor"));
+	}
 
 }
 
@@ -16,6 +30,31 @@ AWizardCharacter::AWizardCharacter()
 void AWizardCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	SpawnLocation = GetActorLocation();
+
+	//set max walk speed to walk speed definied in wizard BP
+	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
+	{
+		MyCharacterMovement->MaxWalkSpeed = WalkSpeed;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("failed to set character movement in constructor"));
+	}
+
+	CurrentHealth = MaxHealth;
+	LastKnownHealth = CurrentHealth;
+
+	if(HUD_Widget)
+	{
+		UUserWidget* TempWidget = CreateWidget(Cast<APlayerController>(GetController()), HUD_Widget);
+		HUD_WidgetInstance = Cast<UHUDUserWidget>(TempWidget);
+		if(HUD_WidgetInstance)
+		{
+			HUD_WidgetInstance->AddToViewport();
+		}
+	}
 	
 }
 
@@ -24,6 +63,18 @@ void AWizardCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//has our health changed? (networking bullshit)
+	if(LastKnownHealth != CurrentHealth)
+	{
+		LastKnownHealth = CurrentHealth;
+		//update the UI
+		if(HUD_WidgetInstance)
+		{
+			HUD_WidgetInstance->UpdateHealthUI(MaxHealth, CurrentHealth);
+		}
+	}
+	
+	
 }
 
 // Called to bind functionality to input
@@ -39,6 +90,8 @@ void AWizardCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 		EnhancedInputComponent->BindAction(PrimaryFireAction, ETriggerEvent::Started, this, &AWizardCharacter::OnPrimaryFire);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AWizardCharacter::OnStartSprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AWizardCharacter::OnStopSprint);
 	}
 
 }
@@ -132,6 +185,61 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 	}
 }
 
+void AWizardCharacter::OnStartSprint()
+{
+	//update server
+	UpdateSprintRPC(SprintSpeed);
+
+	//update client
+	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
+	{
+		MyCharacterMovement->MaxWalkSpeed = SprintSpeed;
+	}
+}
+
+void AWizardCharacter::OnStopSprint()
+{
+	UpdateSprintRPC(WalkSpeed);
+
+	//update client
+	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
+	{
+		MyCharacterMovement->MaxWalkSpeed = WalkSpeed;
+	}
+	
+}
+
+void AWizardCharacter::TakeDamage(int32 DamageTaken)
+{
+	//remove the taken damage from health
+	CurrentHealth -= DamageTaken;
+
+	//check if the wizard should die
+	if(CurrentHealth <= 0)
+	{
+		//die
+		UE_LOG(LogTemp, Warning, TEXT("buddy is out of health and should die"));
+		SetActorLocation(SpawnLocation);
+		CurrentHealth = MaxHealth;
+	}
+	
+}
 
 
+void AWizardCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(AWizardCharacter, CurrentHealth);
+}
+
+void AWizardCharacter::UpdateSprintRPC_Implementation(float NewSpeed)
+{
+	if(HasAuthority())
+	{
+		if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
+		{
+			MyCharacterMovement->MaxWalkSpeed = NewSpeed;
+		}
+	}
+}

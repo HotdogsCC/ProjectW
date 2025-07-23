@@ -8,6 +8,7 @@
 #include "WizardCharacter.generated.h"
 
 
+class UHUDUserWidget;
 class AProjectileBase;
 
 UCLASS()
@@ -30,7 +31,11 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UFUNCTION(BlueprintCallable)
+	void TakeDamage(int32 DamageTaken);
+
 private:
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	//Input Functions
 	UFUNCTION()
@@ -38,6 +43,12 @@ private:
 
 	UFUNCTION()
 	void OnLook(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnStartSprint();
+
+	UFUNCTION()
+	void OnStopSprint();
 
 	UFUNCTION()
 	void OnPrimaryFire();
@@ -53,18 +64,54 @@ private:
 	UInputAction* JumpAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UInputAction* SprintAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* PrimaryFireAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> HUD_Widget;
+
+	UPROPERTY()
+	UHUDUserWidget* HUD_WidgetInstance;
+	
 
 	//RPC Primary Fire
 	UFUNCTION(Server, Reliable)
 	void PrimaryFireServerRPC();
 
+	//RPC Sprint
+	UFUNCTION(Server, Reliable)
+	void UpdateSprintRPC(float NewSpeed);
+
 	//Projectile Blueprints
 	UPROPERTY(EditDefaultsOnly, Category = "Projectiles", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AProjectileBase> ProjectileBP;
 
+	//Sprint and walk speeds
+	UPROPERTY(EditDefaultsOnly, Category = "Player Attributes", meta = (AllowPrivateAccess = "true"))
+	float WalkSpeed;
+	UPROPERTY(EditDefaultsOnly, Category = "Player Attributes", meta = (AllowPrivateAccess = "true"))
+	float SprintSpeed;
+
 	//temp object used for raycast debugging
 	UPROPERTY(EditDefaultsOnly, Category = "Debug", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AActor> SpotterThing;
+
+	//How much health the wizard starts with
+	UPROPERTY(EditDefaultsOnly, Category = "Player Attributes", meta = (AllowPrivateAccess = "true"))
+	int32 MaxHealth;
+	
+	//How much health they currently have
+	UPROPERTY(Replicated)
+	int32 CurrentHealth;
+
+	//what the health was last frame
+	UPROPERTY()
+	int32 LastKnownHealth;
+
+	//temp for instant respawn
+	UPROPERTY()
+	FVector SpawnLocation;
 
 };

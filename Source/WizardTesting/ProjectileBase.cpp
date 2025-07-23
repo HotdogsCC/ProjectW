@@ -160,4 +160,10 @@ bool AProjectileBase::GetReady() const
 	return bReady;
 }
 
+int32 AProjectileBase::GetDamage() const
+{
+	return Damage;
+}
+
+
 
