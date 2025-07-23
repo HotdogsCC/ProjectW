@@ -2,7 +2,10 @@
 
 
 #include "WizardCharacter.h"
+#include "Net/UnrealNetwork.h"
+#include "HUDUserWidget.h"
 #include "ProjectileBase.h"
+#include "Blueprint/UserWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -39,6 +42,18 @@ void AWizardCharacter::BeginPlay()
 	}
 
 	CurrentHealth = MaxHealth;
+	LastKnownHealth = CurrentHealth;
+
+	if(HUD_Widget)
+	{
+		UUserWidget* TempWidget = CreateWidget(Cast<APlayerController>(GetController()), HUD_Widget);
+		HUD_WidgetInstance = Cast<UHUDUserWidget>(TempWidget);
+		if(HUD_WidgetInstance)
+		{
+			HUD_WidgetInstance->AddToViewport();
+		}
+	}
+	
 }
 
 // Called every frame
@@ -46,6 +61,18 @@ void AWizardCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//has our health changed? (networking bullshit)
+	if(LastKnownHealth != CurrentHealth)
+	{
+		LastKnownHealth = CurrentHealth;
+		//update the UI
+		if(HUD_WidgetInstance)
+		{
+			HUD_WidgetInstance->UpdateHealthUI(MaxHealth, CurrentHealth);
+		}
+	}
+	
+	
 }
 
 // Called to bind functionality to input
@@ -185,4 +212,13 @@ void AWizardCharacter::TakeDamage(int32 DamageTaken)
 		//die
 		UE_LOG(LogTemp, Warning, TEXT("buddy is out of health and should die"));
 	}
+	
+}
+
+
+void AWizardCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AWizardCharacter, CurrentHealth);
 }

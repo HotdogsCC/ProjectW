@@ -8,6 +8,7 @@
 #include "WizardCharacter.generated.h"
 
 
+class UHUDUserWidget;
 class AProjectileBase;
 
 UCLASS()
@@ -34,6 +35,7 @@ public:
 	void TakeDamage(int32 DamageTaken);
 
 private:
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	//Input Functions
 	UFUNCTION()
@@ -67,6 +69,13 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* PrimaryFireAction;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> HUD_Widget;
+
+	UPROPERTY()
+	UHUDUserWidget* HUD_WidgetInstance;
+	
+
 	//RPC Primary Fire
 	UFUNCTION(Server, Reliable)
 	void PrimaryFireServerRPC();
@@ -90,6 +99,11 @@ private:
 	int32 MaxHealth;
 	
 	//How much health they currently have
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	int32 CurrentHealth;
+
+	//what the health was last frame
+	UPROPERTY()
+	int32 LastKnownHealth;
+
 };
