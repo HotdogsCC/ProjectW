@@ -80,6 +80,10 @@ private:
 	UFUNCTION(Server, Reliable)
 	void PrimaryFireServerRPC();
 
+	//RPC Sprint
+	UFUNCTION(Server, Reliable)
+	void UpdateSprintRPC(float NewSpeed);
+
 	//Projectile Blueprints
 	UPROPERTY(EditDefaultsOnly, Category = "Projectiles", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AProjectileBase> ProjectileBP;

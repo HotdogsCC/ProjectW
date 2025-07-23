@@ -187,15 +187,21 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 
 void AWizardCharacter::OnStartSprint()
 {
+	//update server
+	UpdateSprintRPC(SprintSpeed);
+
+	//update client
 	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
 	{
 		MyCharacterMovement->MaxWalkSpeed = SprintSpeed;
 	}
-	
 }
 
 void AWizardCharacter::OnStopSprint()
 {
+	UpdateSprintRPC(WalkSpeed);
+
+	//update client
 	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
 	{
 		MyCharacterMovement->MaxWalkSpeed = WalkSpeed;
@@ -225,4 +231,15 @@ void AWizardCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWizardCharacter, CurrentHealth);
+}
+
+void AWizardCharacter::UpdateSprintRPC_Implementation(float NewSpeed)
+{
+	if(HasAuthority())
+	{
+		if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
+		{
+			MyCharacterMovement->MaxWalkSpeed = NewSpeed;
+		}
+	}
 }
