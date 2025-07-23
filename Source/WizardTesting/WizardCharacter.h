@@ -30,6 +30,9 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UFUNCTION(BlueprintCallable)
+	void TakeDamage(int32 DamageTaken);
+
 private:
 	
 	//Input Functions
@@ -73,13 +76,20 @@ private:
 	TSubclassOf<AProjectileBase> ProjectileBP;
 
 	//Sprint and walk speeds
-	UPROPERTY(EditDefaultsOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "Player Attributes", meta = (AllowPrivateAccess = "true"))
 	float WalkSpeed;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "Player Attributes", meta = (AllowPrivateAccess = "true"))
 	float SprintSpeed;
 
 	//temp object used for raycast debugging
 	UPROPERTY(EditDefaultsOnly, Category = "Debug", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AActor> SpotterThing;
 
+	//How much health the wizard starts with
+	UPROPERTY(EditDefaultsOnly, Category = "Player Attributes", meta = (AllowPrivateAccess = "true"))
+	int32 MaxHealth;
+	
+	//How much health they currently have
+	UPROPERTY()
+	int32 CurrentHealth;
 };

@@ -37,6 +37,8 @@ void AWizardCharacter::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("failed to set character movement in constructor"));
 	}
+
+	CurrentHealth = MaxHealth;
 }
 
 // Called every frame
@@ -154,7 +156,6 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 	}
 }
 
-
 void AWizardCharacter::OnStartSprint()
 {
 	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
@@ -171,4 +172,17 @@ void AWizardCharacter::OnStopSprint()
 		MyCharacterMovement->MaxWalkSpeed = WalkSpeed;
 	}
 	
+}
+
+void AWizardCharacter::TakeDamage(int32 DamageTaken)
+{
+	//remove the taken damage from health
+	CurrentHealth -= DamageTaken;
+
+	//check if the wizard should die
+	if(CurrentHealth <= 0)
+	{
+		//die
+		UE_LOG(LogTemp, Warning, TEXT("buddy is out of health and should die"));
+	}
 }

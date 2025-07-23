@@ -38,6 +38,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool GetReady() const;
 
+	UFUNCTION(BlueprintCallable)
+	int32 GetDamage() const; 
+
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* MeshComponent;
@@ -56,6 +59,10 @@ private:
 	//the curviness of the projectile
 	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
 	float Curviness = 0.0f;
+
+	//how much damage the projectile deals
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	int32 Damage = 10;
 
 	//the initial distance from its spawn to the target
 	UPROPERTY()
