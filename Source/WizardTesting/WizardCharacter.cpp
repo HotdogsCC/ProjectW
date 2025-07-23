@@ -3,12 +3,23 @@
 
 #include "WizardCharacter.h"
 #include "ProjectileBase.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AWizardCharacter::AWizardCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	
+	//set max walk speed to walk speed definied in wizard BP
+	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
+	{
+		MyCharacterMovement->MaxWalkSpeed = WalkSpeed;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("failed to set character movement in constructor"));
+	}
 
 }
 
@@ -16,7 +27,16 @@ AWizardCharacter::AWizardCharacter()
 void AWizardCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	//set max walk speed to walk speed definied in wizard BP
+	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
+	{
+		MyCharacterMovement->MaxWalkSpeed = WalkSpeed;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("failed to set character movement in constructor"));
+	}
 }
 
 // Called every frame
@@ -39,6 +59,8 @@ void AWizardCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 		EnhancedInputComponent->BindAction(PrimaryFireAction, ETriggerEvent::Started, this, &AWizardCharacter::OnPrimaryFire);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AWizardCharacter::OnStartSprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AWizardCharacter::OnStopSprint);
 	}
 
 }
@@ -133,5 +155,20 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 }
 
 
+void AWizardCharacter::OnStartSprint()
+{
+	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
+	{
+		MyCharacterMovement->MaxWalkSpeed = SprintSpeed;
+	}
+	
+}
 
-
+void AWizardCharacter::OnStopSprint()
+{
+	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
+	{
+		MyCharacterMovement->MaxWalkSpeed = WalkSpeed;
+	}
+	
+}

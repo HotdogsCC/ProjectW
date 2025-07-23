@@ -40,6 +40,12 @@ private:
 	void OnLook(const FInputActionValue& Value);
 
 	UFUNCTION()
+	void OnStartSprint();
+
+	UFUNCTION()
+	void OnStopSprint();
+
+	UFUNCTION()
 	void OnPrimaryFire();
 	
 	//Input actions
@@ -53,6 +59,9 @@ private:
 	UInputAction* JumpAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UInputAction* SprintAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* PrimaryFireAction;
 
 	//RPC Primary Fire
@@ -62,6 +71,12 @@ private:
 	//Projectile Blueprints
 	UPROPERTY(EditDefaultsOnly, Category = "Projectiles", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AProjectileBase> ProjectileBP;
+
+	//Sprint and walk speeds
+	UPROPERTY(EditDefaultsOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	float WalkSpeed;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	float SprintSpeed;
 
 	//temp object used for raycast debugging
 	UPROPERTY(EditDefaultsOnly, Category = "Debug", meta = (AllowPrivateAccess = "true"))
