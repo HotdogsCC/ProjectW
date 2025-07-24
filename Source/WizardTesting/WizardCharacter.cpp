@@ -4,7 +4,6 @@
 #include "WizardCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "HUDUserWidget.h"
-#include "ProjectileBase.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -33,6 +32,22 @@ void AWizardCharacter::BeginPlay()
 
 	SpawnLocation = GetActorLocation();
 
+	AActor* ProjectileActorInstance = GetWorld()->SpawnActor(ProjectileBP);
+	if(ProjectileActorInstance)
+	{
+		AProjectileBase* TempProjectileBase = Cast<AProjectileBase>(ProjectileActorInstance);
+		if(TempProjectileBase)
+		{
+			PrimarySpell.FireType = TempProjectileBase->GetFireType();
+			PrimarySpell.TimeBetweenShots = TempProjectileBase->GetTimeBetweenShots();
+			PrimarySpell.BurstModeTime = TempProjectileBase->GetBurstModeTime();
+			UE_LOG(LogTemp, Warning, TEXT("this did a thing"));
+		}
+		ProjectileActorInstance->Destroy();
+	}
+	
+	
+
 	//set max walk speed to walk speed definied in wizard BP
 	if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
 	{
@@ -53,6 +68,8 @@ void AWizardCharacter::BeginPlay()
 		if(HUD_WidgetInstance)
 		{
 			HUD_WidgetInstance->AddToViewport();
+
+			HUD_WidgetInstance->CanFire();
 		}
 	}
 	
@@ -71,6 +88,58 @@ void AWizardCharacter::Tick(float DeltaTime)
 		if(HUD_WidgetInstance)
 		{
 			HUD_WidgetInstance->UpdateHealthUI(MaxHealth, CurrentHealth);
+		}
+	}
+
+	//has our firing status changed?
+	if(bLastKnownCanFire != bCanFire)
+	{
+		bLastKnownCanFire = bCanFire;
+		if(HUD_WidgetInstance)
+		{
+			if(bCanFire)
+			{
+				HUD_WidgetInstance->CanFire();
+			}
+			else
+			{
+				HUD_WidgetInstance->CannotFire();
+			}
+		}
+		
+	}
+
+	//are we the server?
+	if(HasAuthority())
+	{
+		//are we on a firing cooldown?
+		if(!bCanFire)
+		{
+			CanFireTimer -= DeltaTime;
+			if(CanFireTimer <= 0.0f)
+			{
+				bCanFire = true;
+			}
+		}
+
+		//are we currently bursting?
+		if(bIsBursting)
+		{
+			CanBurstTimer -= DeltaTime;
+
+			if(CanBurstTimer <= 0.0f)
+			{
+				SpawnProjectile();
+				BurstCount++;
+				if(BurstCount > 1)
+				{
+					bIsBursting = false;
+				}
+				else
+				{
+					CanBurstTimer = PrimarySpell.BurstModeTime;
+				}
+			}
 		}
 	}
 	
@@ -142,45 +211,32 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 	//if this machine is the server
 	if(HasAuthority())
 	{
-		//get camera transform
-		FVector CameraLocation;
-		FRotator CameraRotation;
-		Controller->GetPlayerViewPoint(CameraLocation, CameraRotation);
-		FVector End = CameraLocation + (CameraRotation.Vector() * 20000.0f);
-
-		//set up for trace
-		FHitResult HitResult;
-		FCollisionQueryParams QueryParams;
-		QueryParams.AddIgnoredActor(this);
-
-		//do the trace
-		bool bHit = GetWorld()->LineTraceSingleByChannel(
-			HitResult,
-			CameraLocation,
-			End,
-			ECC_WorldStatic,
-			QueryParams
-			);
-
-		//if we hit something
-		if(bHit)
+		//can we shoot?
+		if(bCanFire)
 		{
-
-			AActor* ProjectileInstance = GetWorld()->SpawnActor(ProjectileBP);
-			//spawns projectile where player is
-			ProjectileInstance->SetActorLocation(GetActorLocation());
-			//rotates projectile in the direction the player is looking
-			ProjectileInstance->SetActorRotation(GetControlRotation());
-			//get projectile base cpp
-			if(AProjectileBase* ProjectileComponent = Cast<AProjectileBase>(ProjectileInstance))
+			
+			
+			bCanFire = false;
+			CanFireTimer = PrimarySpell.TimeBetweenShots;
+			
+			switch (PrimarySpell.FireType)
 			{
-				ProjectileComponent->SetWizardOwner(this);
-				ProjectileComponent->SetTarget(HitResult.Location);
-				
-			}
-		}
-		
+			case EFireType::Single:
+				break;
 
+			case EFireType::Burst:
+				bIsBursting = true;
+				CanBurstTimer = PrimarySpell.BurstModeTime;
+				BurstCount = 0;
+				break;
+
+			case EFireType::Automatic:
+				break;
+			}
+			
+			SpawnProjectile();
+			
+		}
 		
 	}
 }
@@ -231,6 +287,7 @@ void AWizardCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWizardCharacter, CurrentHealth);
+	DOREPLIFETIME(AWizardCharacter, bCanFire);
 }
 
 void AWizardCharacter::UpdateSprintRPC_Implementation(float NewSpeed)
@@ -240,6 +297,47 @@ void AWizardCharacter::UpdateSprintRPC_Implementation(float NewSpeed)
 		if(UCharacterMovementComponent* MyCharacterMovement = GetCharacterMovement())
 		{
 			MyCharacterMovement->MaxWalkSpeed = NewSpeed;
+		}
+	}
+}
+
+void AWizardCharacter::SpawnProjectile()
+{
+	//get camera transform
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	Controller->GetPlayerViewPoint(CameraLocation, CameraRotation);
+	FVector End = CameraLocation + (CameraRotation.Vector() * 20000.0f);
+
+	//set up for trace
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	//do the trace
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		CameraLocation,
+		End,
+		ECC_WorldStatic,
+		QueryParams
+		);
+
+	//if we hit something
+	if(bHit)
+	{
+
+		AActor* ProjectileInstance = GetWorld()->SpawnActor(ProjectileBP);
+		//spawns projectile where player is
+		ProjectileInstance->SetActorLocation(GetActorLocation());
+		//rotates projectile in the direction the player is looking
+		ProjectileInstance->SetActorRotation(GetControlRotation());
+		//get projectile base cpp
+		if(AProjectileBase* ProjectileComponent = Cast<AProjectileBase>(ProjectileInstance))
+		{
+			ProjectileComponent->SetWizardOwner(this);
+			ProjectileComponent->SetTarget(HitResult.Location);
+				
 		}
 	}
 }
