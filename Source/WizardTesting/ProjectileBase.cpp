@@ -165,5 +165,22 @@ int32 AProjectileBase::GetDamage() const
 	return Damage;
 }
 
+EFireType AProjectileBase::GetFireType() const
+{
+	return FireType;
+}
+
+float AProjectileBase::GetTimeBetweenShots() const
+{
+	return TimeBetweenShots;
+}
+
+float AProjectileBase::GetBurstModeTime() const
+{
+	return BurstModeTime;
+}
+
+
+
 
 

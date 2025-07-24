@@ -16,4 +16,10 @@ class WIZARDTESTING_API UHUDUserWidget : public UUserWidget
 public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateHealthUI(int32 MaxHealth, int32 CurrentHealth);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void CannotFire();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void CanFire();
 };

@@ -5,11 +5,22 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "EnhancedInputComponent.h"
+#include "ProjectileBase.h"
 #include "WizardCharacter.generated.h"
 
 
 class UHUDUserWidget;
 class AProjectileBase;
+
+USTRUCT()
+struct FSpell
+{
+	GENERATED_BODY()
+
+	EFireType FireType;
+	float TimeBetweenShots;
+	float BurstModeTime;
+};
 
 UCLASS()
 class WIZARDTESTING_API AWizardCharacter : public ACharacter
@@ -113,5 +124,31 @@ private:
 	//temp for instant respawn
 	UPROPERTY()
 	FVector SpawnLocation;
+
+	//information about the primary spell type
+	UPROPERTY()
+	FSpell PrimarySpell;
+
+	UPROPERTY(Replicated)
+	bool bCanFire = true;
+
+	//networking bullshit
+	UPROPERTY()
+	bool bLastKnownCanFire = true;
+
+	UPROPERTY()
+	float CanFireTimer;
+
+	UPROPERTY()
+	bool bIsBursting = false;
+	
+	UPROPERTY()
+	float CanBurstTimer;
+
+	UPROPERTY()
+	uint8 BurstCount;
+
+	UFUNCTION()
+	void SpawnProjectile();
 
 };

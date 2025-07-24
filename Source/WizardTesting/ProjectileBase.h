@@ -10,6 +10,15 @@
 class AWizardCharacter;
 class UPointLightComponent;
 
+UENUM()
+enum class EFireType : uint8
+{
+	Single,
+	Burst,
+	Automatic
+};
+
+
 UCLASS()
 class WIZARDTESTING_API AProjectileBase : public AActor
 {
@@ -39,7 +48,16 @@ public:
 	bool GetReady() const;
 
 	UFUNCTION(BlueprintCallable)
-	int32 GetDamage() const; 
+	int32 GetDamage() const;
+
+	UFUNCTION()
+	EFireType GetFireType() const;
+
+	UFUNCTION()
+	float GetTimeBetweenShots() const;
+
+	UFUNCTION()
+	float GetBurstModeTime() const;
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -90,10 +108,22 @@ private:
 	bool bTargetReached;
 
 	//the character actor who spawned the projectile
-	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
 	AWizardCharacter* WizardOwner;
 
 	//whether the projectile should care about collisions
-	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
 	bool bReady;
+
+	//the kind of fire mode of the projectile
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	EFireType FireType;
+
+	//time between each projectile to spawn
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	float TimeBetweenShots = 1.0f;
+
+	//time between each projectile to spawn for bursts
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	float BurstModeTime = 0.1f;
 };
