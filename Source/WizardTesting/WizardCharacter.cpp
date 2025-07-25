@@ -41,9 +41,21 @@ void AWizardCharacter::BeginPlay()
 			PrimarySpell.FireType = TempProjectileBase->GetFireType();
 			PrimarySpell.TimeBetweenShots = TempProjectileBase->GetTimeBetweenShots();
 			PrimarySpell.BurstModeTime = TempProjectileBase->GetBurstModeTime();
-			UE_LOG(LogTemp, Warning, TEXT("this did a thing"));
 		}
 		ProjectileActorInstance->Destroy();
+	}
+
+	AActor* Projectile2ActorInstance = GetWorld()->SpawnActor(SecondaryProjectileBP);
+	if(Projectile2ActorInstance)
+	{
+		AProjectileBase* TempProjectileBase = Cast<AProjectileBase>(Projectile2ActorInstance);
+		if(TempProjectileBase)
+		{
+			SecondarySpell.FireType = TempProjectileBase->GetFireType();
+			SecondarySpell.TimeBetweenShots = TempProjectileBase->GetTimeBetweenShots();
+			SecondarySpell.BurstModeTime = TempProjectileBase->GetBurstModeTime();
+		}
+		Projectile2ActorInstance->Destroy();
 	}
 	
 	
@@ -106,6 +118,12 @@ void AWizardCharacter::Tick(float DeltaTime)
 				HUD_WidgetInstance->CannotFire();
 			}
 		}
+	}
+
+	//has our firing status changed?
+	if(bLastKnownCanSecondaryFire != bCanSecondaryFire)
+	{
+		bLastKnownCanSecondaryFire = bCanSecondaryFire;
 		
 	}
 
@@ -122,6 +140,16 @@ void AWizardCharacter::Tick(float DeltaTime)
 			}
 		}
 
+		//are we on a firing cooldown?
+		if(!bCanSecondaryFire)
+		{
+			CanSecondaryFireTimer -= DeltaTime;
+			if(CanSecondaryFireTimer <= 0.0f)
+			{
+				bCanSecondaryFire = true;
+			}
+		}
+
 		//are we currently bursting?
 		if(bIsBursting)
 		{
@@ -129,7 +157,7 @@ void AWizardCharacter::Tick(float DeltaTime)
 
 			if(CanBurstTimer <= 0.0f)
 			{
-				SpawnProjectile();
+				SpawnProjectile(ProjectileBP);
 				BurstCount++;
 				if(BurstCount > 1)
 				{
@@ -159,6 +187,7 @@ void AWizardCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 		EnhancedInputComponent->BindAction(PrimaryFireAction, ETriggerEvent::Started, this, &AWizardCharacter::OnPrimaryFire);
+		EnhancedInputComponent->BindAction(SecondaryFireAction, ETriggerEvent::Started, this, &AWizardCharacter::OnSecondaryFire);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AWizardCharacter::OnStartSprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AWizardCharacter::OnStopSprint);
 	}
@@ -214,8 +243,6 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 		//can we shoot?
 		if(bCanFire)
 		{
-			
-			
 			bCanFire = false;
 			CanFireTimer = PrimarySpell.TimeBetweenShots;
 			
@@ -234,12 +261,49 @@ void AWizardCharacter::PrimaryFireServerRPC_Implementation()
 				break;
 			}
 			
-			SpawnProjectile();
+			SpawnProjectile(ProjectileBP);
 			
 		}
 		
 	}
 }
+
+void AWizardCharacter::OnSecondaryFire()
+{
+	SecondaryFireServerRPC();
+}
+
+void AWizardCharacter::SecondaryFireServerRPC_Implementation() 
+{
+	//if this machine is the server
+	if(HasAuthority())
+	{
+		//can we shoot?
+		if(bCanSecondaryFire)
+		{
+			bCanSecondaryFire = false;
+			CanSecondaryFireTimer = SecondarySpell.TimeBetweenShots;
+			
+			switch (SecondarySpell.FireType)
+			{
+			case EFireType::Single:
+				break;
+
+			case EFireType::Burst:
+				
+				break;
+
+			case EFireType::Automatic:
+				break;
+			}
+			
+			SpawnProjectile(SecondaryProjectileBP);
+			
+		}
+		
+	}
+}
+
 
 void AWizardCharacter::OnStartSprint()
 {
@@ -288,6 +352,7 @@ void AWizardCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME(AWizardCharacter, CurrentHealth);
 	DOREPLIFETIME(AWizardCharacter, bCanFire);
+	DOREPLIFETIME(AWizardCharacter, bCanSecondaryFire);
 }
 
 void AWizardCharacter::UpdateSprintRPC_Implementation(float NewSpeed)
@@ -301,7 +366,7 @@ void AWizardCharacter::UpdateSprintRPC_Implementation(float NewSpeed)
 	}
 }
 
-void AWizardCharacter::SpawnProjectile()
+void AWizardCharacter::SpawnProjectile(UClass* ProjectileToSpawn)
 {
 	//get camera transform
 	FVector CameraLocation;
@@ -326,8 +391,7 @@ void AWizardCharacter::SpawnProjectile()
 	//if we hit something
 	if(bHit)
 	{
-
-		AActor* ProjectileInstance = GetWorld()->SpawnActor(ProjectileBP);
+		AActor* ProjectileInstance = GetWorld()->SpawnActor(ProjectileToSpawn);
 		//spawns projectile where player is
 		ProjectileInstance->SetActorLocation(GetActorLocation());
 		//rotates projectile in the direction the player is looking
