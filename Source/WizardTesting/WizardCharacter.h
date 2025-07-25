@@ -63,6 +63,9 @@ private:
 
 	UFUNCTION()
 	void OnPrimaryFire();
+
+	UFUNCTION()
+	void OnSecondaryFire();
 	
 	//Input actions
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
@@ -79,6 +82,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* PrimaryFireAction;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UInputAction* SecondaryFireAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> HUD_Widget;
@@ -90,6 +96,10 @@ private:
 	//RPC Primary Fire
 	UFUNCTION(Server, Reliable)
 	void PrimaryFireServerRPC();
+	
+	//RPC Secondary Fire
+	UFUNCTION(Server, Reliable)
+	void SecondaryFireServerRPC();
 
 	//RPC Sprint
 	UFUNCTION(Server, Reliable)
@@ -98,6 +108,9 @@ private:
 	//Projectile Blueprints
 	UPROPERTY(EditDefaultsOnly, Category = "Projectiles", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AProjectileBase> ProjectileBP;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Projectiles", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AProjectileBase> SecondaryProjectileBP;
 
 	//Sprint and walk speeds
 	UPROPERTY(EditDefaultsOnly, Category = "Player Attributes", meta = (AllowPrivateAccess = "true"))
@@ -129,15 +142,27 @@ private:
 	UPROPERTY()
 	FSpell PrimarySpell;
 
+	//information about the secondary spell type
+	UPROPERTY()
+	FSpell SecondarySpell;
+
 	UPROPERTY(Replicated)
 	bool bCanFire = true;
+
+	UPROPERTY(Replicated)
+	bool bCanSecondaryFire = true;
 
 	//networking bullshit
 	UPROPERTY()
 	bool bLastKnownCanFire = true;
+	UPROPERTY()
+	bool bLastKnownCanSecondaryFire = true;
 
 	UPROPERTY()
 	float CanFireTimer;
+
+	UPROPERTY()
+	float CanSecondaryFireTimer;
 
 	UPROPERTY()
 	bool bIsBursting = false;
@@ -149,6 +174,6 @@ private:
 	uint8 BurstCount;
 
 	UFUNCTION()
-	void SpawnProjectile();
+	void SpawnProjectile(UClass* ProjectileToSpawn);
 
 };
