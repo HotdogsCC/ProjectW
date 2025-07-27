@@ -50,6 +50,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int32 GetDamage() const;
 
+	UFUNCTION(BlueprintCallable)
+	int32 GetMagicCollisionDamage() const;
+
 	UFUNCTION()
 	EFireType GetFireType() const;
 
@@ -58,6 +61,12 @@ public:
 
 	UFUNCTION()
 	float GetBurstModeTime() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool GetExplosive() const;
+
+	UFUNCTION(BlueprintCallable)
+	float GetExplosiveRadius() const;
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -81,6 +90,17 @@ private:
 	//how much damage the projectile deals
 	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
 	int32 Damage = 10;
+
+	//the damage that occurs when two projectiles collide
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	int32 MagicCollisionDamage = 20;
+
+	//whether the projectile should cause a big boom
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	bool bExplosive = false;
+
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	float ExplosiveRadius = 300.0f;
 
 	//the initial distance from its spawn to the target
 	UPROPERTY()

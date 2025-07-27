@@ -180,7 +180,18 @@ float AProjectileBase::GetBurstModeTime() const
 	return BurstModeTime;
 }
 
+bool AProjectileBase::GetExplosive() const
+{
+	return bExplosive;
+}
 
+float AProjectileBase::GetExplosiveRadius() const
+{
+	return ExplosiveRadius;
+}
 
-
+int32 AProjectileBase::GetMagicCollisionDamage() const
+{
+	return MagicCollisionDamage;
+}
 
